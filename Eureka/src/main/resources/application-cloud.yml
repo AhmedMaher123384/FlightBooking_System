@@ -1,0 +1,46 @@
+spring:
+  application:
+        name: eureka-service
+
+  sleuth:
+    sampler:
+      probability: 1.0
+  zipkin:
+    base-url: http://zipkin:9411
+    service:
+      name: ${spring.application.name}
+  boot:
+    admin:
+      client:
+        url: http://admin-server:5555
+        instance:
+          service-url: http://eureka-server:8761
+          management-url: http://eureka-server:8761/actuator
+          health-url: http://eureka-server:8761/actuator/health
+server :
+  port: 8761
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  health:
+    show-details: always
+    circuitbreakers:
+      enabled: true
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
+  tracing:
+    sampling:
+      probability: 1.0
+
+eureka :
+  client :
+    registerwitheureka: false
+    fetchregistry: false
+

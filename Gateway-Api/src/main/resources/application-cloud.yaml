@@ -1,0 +1,65 @@
+spring:
+  application:
+        name: api-gateway
+  sleuth:
+    sampler:
+      probability: 1.0
+  zipkin:
+    base-url: http://zipkin:9411
+    service:
+      name: ${spring.application.name}
+  boot:
+    admin:
+      client:
+        url: http://admin-server:5555
+        instance:
+          service-url: http://api-gateway:7777
+          management-url: http://api-gateway:7777/actuator
+          health-url: http://api-gateway:7777/actuator/health
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/users/**
+        - id: flight-service
+          uri: lb://FLIGHT-SERVICE
+          predicates:
+            - Path=/flights/**
+        - id: booking-service
+          uri: lb://BOOKING-SERVICE
+          predicates:
+            - Path=/bookings/**
+        - id: payment-service
+          uri: lb://PAYMENT-SERVICE
+          predicates:
+            - Path=/payments/**
+server:
+  port: 7777
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
+  tracing:
+    sampling:
+      probability: 1.0

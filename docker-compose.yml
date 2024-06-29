@@ -1,0 +1,258 @@
+version: "3.8"
+services:
+
+
+  eureka-server:
+    build:
+      context: ./Eureka
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=cloud
+    networks:
+      - flightbooking-network
+
+  api-gateway:
+    build:
+      context: ./Gateway-Api
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "7777:7777"
+    environment:
+      - SPRING_PROFILES_ACTIVE=cloud
+    depends_on:
+      - eureka-server
+    networks:
+      - flightbooking-network
+
+  admin-server:
+    build:
+      context: ./AdminServer
+      dockerfile: Dockerfile
+    container_name: admin-server
+    ports:
+      - "5555:5555"
+    environment:
+      - SPRING_PROFILES_ACTIVE=cloud
+    depends_on:
+      - eureka-server
+    networks:
+      - flightbooking-network
+
+
+  user-service:
+    build:
+      context: ./User
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "8885:8885"
+    environment:
+      - SPRING_PROFILES_ACTIVE=cloud
+    depends_on:
+      - eureka-server
+      - postgresdb
+    networks:
+      - flightbooking-network
+
+
+  booking-service:
+    build:
+      context: ./Booking
+      dockerfile: Dockerfile
+    container_name: booking-service
+    ports:
+      - "8887:8887"
+    environment:
+      - SPRING_PROFILES_ACTIVE=cloud
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - eureka-server
+      - postgresdb
+    networks:
+      - flightbooking-network
+
+  flight-service:
+    build:
+      context: ./Flight
+      dockerfile: Dockerfile
+    container_name: flight-service
+    ports:
+      - "8886:8886"
+    environment:
+      - SPRING_PROFILES_ACTIVE=cloud
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:9999
+    depends_on:
+      - eureka-server
+      - postgresdb
+    networks:
+      - flightbooking-network
+
+  payment-service:
+    build:
+      context: ./Payments
+      dockerfile: Dockerfile
+    container_name: payment-service
+    ports:
+      - "8888:8888"
+    environment:
+      - SPRING_PROFILES_ACTIVE=cloud
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - eureka-server
+      - postgresdb
+    networks:
+      - flightbooking-network
+
+
+  notification-service:
+    build:
+      context: ./Notification
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "8889:8889"
+    environment:
+      - SPRING_PROFILES_ACTIVE=cloud
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - eureka-server
+      - mongo
+      - kafka
+    networks:
+      - flightbooking-network
+
+
+  postgresdb:
+    image: postgres:latest
+    container_name: postgresdb
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=flightbooking
+    ports:
+      - '5432:5432'
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "flightbooking", "-U", "root"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+     - flightbooking-network
+
+  mongo:
+    image: mongo
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - flightbooking-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    depends_on:
+      - postgresdb
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - '8081:80'
+    networks:
+      - flightbooking-network
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    restart: always
+    ports:
+      - 8082:8082
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_BASICAUTH_USERNAME: root
+      ME_CONFIG_BASICAUTH_PASSWORD: root
+    depends_on:
+      - mongo
+    networks:
+      - flightbooking-network
+
+  zookeeper:
+    image: bitnami/zookeeper
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ALLOW_ANONYMOUS_LOGIN: yes
+    ports:
+      - "22181:2181"
+    networks:
+      - flightbooking-network
+
+  kafka:
+    image: bitnami/kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+    networks:
+      - flightbooking-network
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus/
+    networks:
+      - flightbooking-network
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - flightbooking-network
+
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - flightbooking-network
+
+volumes:
+  pg-data:
+
+networks:
+  flightbooking-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16
+          gateway: 172.19.0.1
+

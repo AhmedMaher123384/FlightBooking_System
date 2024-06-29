@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'spring-boot'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['api-gateway:7777', 'eureka-server:8761','booking-service:8887', 'flight-service:8886', 'payment-service:8888', 'user-service:8885', 'notification-service:8889']

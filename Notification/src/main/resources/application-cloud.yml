@@ -1,0 +1,67 @@
+spring:
+  application:
+        name: notification-service
+  sleuth:
+    sampler:
+      probability: 1.0
+  zipkin:
+    base-url: http://zipkin:9411
+    service:
+      name: ${spring.application.name}
+  boot:
+    admin:
+      client:
+        url: http://admin-server:5555
+        instance:
+          service-url: http://notification-service:8889
+          management-url: http://notification-service:8889/actuator
+          health-url: http://notification-service:8889/actuator/health
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: am1322460@gmail.com
+    password: jqxc vjuj veod fktt
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  kafka:
+    consumer:
+      bootstrap-servers: kafka:9092
+      group-id: paymentGroup,orderGroup
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
+        spring.json.type.mapping: BookingConfirmation:com.api.Notification.Notification.Dto.BookingConfirmation,paymentConfirmation:com.api.Notification.Notification.Dto.paymentConfirmation
+  data:
+    mongodb:
+      uri: mongodb://mongo:27017/notification
+server:
+  port: 8889
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
+  tracing:
+    sampling:
+      probability: 1.0
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka
+  instance:
+    prefer-ip-address: true

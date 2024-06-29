@@ -1,0 +1,70 @@
+spring:
+  application:
+    name: user-service
+  jpa:
+    database: POSTGRESQL
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+  datasource:
+    platform: postgres
+    url: jdbc:postgresql://postgresdb:5432/flightbooking
+    username: root
+    password: root
+    driverClassName: org.postgresql.Driver
+  sleuth:
+    sampler:
+      probability: 1.0
+  zipkin:
+    base-url: http://zipkin:9411
+    service:
+      name: ${spring.application.name}
+  boot:
+    admin:
+      client:
+        url: http://admin-server:5555
+        instance:
+          service-url: http://user-service:8885
+          management-url: http://user-service:8885/actuator
+          health-url: http://user-service:8885/actuator/health
+
+server:
+  port: 8885
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka
+  instance:
+    prefer-ip-address: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  health:
+    show-details: always
+    circuitbreakers:
+      enabled: true
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
+  tracing:
+    sampling:
+      probability: 1.0
+resilience4j:
+  circuitbreaker:
+    instances:
+      getUserInstance:
+        registerHealthIndicator: true
+        eventConsumerBufferSize: 10
+        failureRateThreshold: 50
+        minimumNumberOfCalls: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 3s
+        permittedNumberOfCallsInHalfOpenState: 2
+        slidingWindowSize: 10
+        slidingWindowType: COUNT_BASED
