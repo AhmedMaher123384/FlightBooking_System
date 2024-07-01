@@ -3,14 +3,19 @@
 This project is a microservices-based booking system for flights, built using Spring Boot, Spring Cloud, Docker, and various other technologies. 
 The system includes services for user management, flight management, booking, and payment, along with integrated monitoring and tracing.
 
-## About
-A comprehensive system to manage flight bookings with a microservices architecture.
-
-## Prerequisites
-
-- JDK 22 
-- Maven 3.6.3 or higher
-- Docker and Docker Compose
+## Technologies Used
+- **Spring Boot**: Framework for creating stand-alone, production-grade Spring-based applications.
+- **Spring Cloud**: Provides tools for building and deploying cloud-native applications.
+- **Spring Cloud OpenFeign**: For inter-service communication.
+- **Spring Cloud Netflix Eureka**: For service registration and discovery.
+- **Spring Cloud Gateway**: For API Gateway and routing.
+- **Postgresql**: Relational database for storing persistent data.
+- **Apache Kafka**: Distributed event streaming platform for building real-time data pipelines and streaming applications.
+- **Spring Boot Admin**: For managing and monitoring Spring Boot applications.
+- **JavaMail**: To send and receive emails.
+- **Grafana**: Open-source platform for monitoring and observability.
+- **Prometheus**: Open-source monitoring and alerting toolkit.
+  
 
 ## Services
 
@@ -28,7 +33,7 @@ Follow these steps to set up and run the project:
 1. **Clone the repository:**
 
     ```bash
-    git clone https://github.com/yourusername/complex-booking-system.git
+    git clone https://github.com/AhmedMaher123384/complex-booking-system.git
     cd complex-booking-system
     ```
 
@@ -59,7 +64,6 @@ Follow these steps to set up and run the project:
 
     ```bash
     docker-compose up -d
-    ```
     ```
 
 6. **Access the services:**
